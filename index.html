@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Forecast App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.3.4/axios.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-[url('bg.img')] bg-cover bg-center bg-no-repeat text-white min-h-screen p-4 flex justify-center items-center">
+    <div class="mx-auto w-full max-w-screen-lg">
+        <!-- Header -->
+        <header class="flex flex-col sm:flex-row justify-between items-center p-4 rounded-xl shadow-lg mb-4">
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-wide text-center sm:text-left mb-4 sm:mb-0">🌤️ Weather Forecast</h1>
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Search city here..." class="p-2 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-400 w-full sm:w-auto">
+                    <ul id="recentSearches" class="hidden absolute bg-white text-black mt-1 rounded-md shadow-md w-full sm:w-auto z-10"></ul>
+                </div>
+                <button id="searchBtn" class="bg-white px-4 py-2 rounded-md hover:bg-blue-600 transition">🔍</button>
+                <button id="currentLocationBtn" class="bg-white text-black px-4 py-2 rounded-md hover:bg-green-600 transition">Use my location📍</button>
+            </div>
+        </header>
+
+        <!-- Today's Weather Forecast -->
+        <section class="p-4 rounded-xl shadow-md mb-4">
+            <h2 class="text-xl sm:text-2xl font-semibold">Today's Weather Forecast</h2>
+            <p id="dateTime" class="text-xl mt-2">Date & Time</p><br><br>
+            <p id="cityname" class="text-xl sm:text-5xl"></p>
+            <div class="flex flex-col sm:flex-row justify-between items-center mt-2">
+                <div class="text-center sm:text-left">
+                    <p class="text-5xl sm:text-7xl font-bold" id="temperature">20°C</p>
+                    <p class="text-xl" id="feelsLike">Feels like 12°C</p>
+                </div>
+                <div class="text-xl mt-4 sm:mt-0">
+                    <img id="weatherIcon" src="https://openweathermap.org/img/wn/01d@2x.png" alt="Weather Icon" class="w-30 h-40 mx-auto sm:w-32 sm:h-44">
+                    <p id="weatherDescription">Description</p>
+                    <!-- <p id="precipitation">Precipitation: --%</p> -->
+                    <p id="humidity">Humidity: --%</p>
+                    <p id="wind">Wind: -- km/h</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5-Day Forecast -->
+        <section class="p-4 rounded-xl shadow-md">
+            <h3 class="text-2xl sm:text-3xl font-semibold">5-Day Forecast</h3><br>
+            <div id="forecastContainer" class="grid grid-cols-2 sm:grid-cols-5 gap-4 mt-2">
+                <!-- Dynamic Forecast Data -->
+                <div id="card" class="p-6 rounded-2xl shadow-lg text-center transform transition-transform duration-300 ease-in-out hover:scale-110">
+                    <h3 class="text-lg font-semibold">08-02</h3>
+                    <img src="https://openweathermap.org/img/wn/01d.png" alt="Sunny" class="mx-auto my-2 w-16">
+                    <p class="text-xl font-bold">30°C</p>
+                    <p>Sunny</p>
+                </div>
+                <div id="card" class="p-6 rounded-2xl shadow-lg text-center transform transition-transform duration-300 ease-in-out hover:scale-110">
+                    <h3 class="text-lg font-semibold">09-02</h3>
+                    <img src="https://openweathermap.org/img/wn/02d.png" alt="Cloudy" class="mx-auto my-2 w-16">
+                    <p class="text-xl font-bold">28°C</p>
+                    <p>Partly Cloudy</p>
+                </div>
+                <div id="card" class="p-6 rounded-2xl shadow-lg text-center transform transition-transform duration-300 ease-in-out hover:scale-110">
+                    <h3 class="text-lg font-semibold">10-02</h3>
+                    <img src="https://openweathermap.org/img/wn/10d.png" alt="Rainy" class="mx-auto my-2 w-16">
+                    <p class="text-xl font-bold">24°C</p>
+                    <p>Rainy</p>
+                </div>
+                <div id="card" class="p-6 rounded-2xl shadow-lg text-center transform transition-transform duration-300 ease-in-out hover:scale-110">
+                    <h3 class="text-lg font-semibold">11-02</h3>
+                    <img src="https://openweathermap.org/img/wn/03d.png" alt="Cloudy" class="mx-auto my-2 w-16">
+                    <p class="text-xl font-bold">26°C</p>
+                    <p>Cloudy</p>
+                </div>
+                <div id="card" class="p-6 rounded-2xl shadow-lg text-center transform transition-transform duration-300 ease-in-out hover:scale-110">
+                    <h3 class="text-lg font-semibold">12-02</h3>
+                    <img src="https://openweathermap.org/img/wn/13d.png" alt="Snowy" class="mx-auto my-2 w-16">
+                    <p class="text-xl font-bold">-2°C</p>
+                    <p>Snowy</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+<script src="app.js"></script>
+</html>
