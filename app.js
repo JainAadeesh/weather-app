@@ -1,115 +1,147 @@
-const url = 'https://weather-api138.p.rapidapi.com/weather?city_name=New%20York';
-const options = {
-    method: 'GET',
-    headers: {
-        'x-rapidapi-key': '00211c4191msh0c533e4eddd4469p11cf59jsnfb7996d59ba6',
-        'x-rapidapi-host': 'weather-api138.p.rapidapi.com'
-    }
+// Selecting DOM elements
+const elements = {
+  searchInput: document.getElementById('searchInput'),
+  searchBtn: document.getElementById('searchBtn'),
+  currentLocationBtn: document.getElementById('currentLocationBtn'),
+  recentSearches: document.getElementById('recentSearches'),
+  cityname: document.getElementById('cityname'),
+  dateTime: document.getElementById('dateTime'),
+  temperature: document.getElementById('temperature'),
+  feelsLike: document.getElementById('feelsLike'),
+  weatherIcon: document.getElementById('weatherIcon'),
+  weatherDescription: document.getElementById('weatherDescription'),
+  humidity: document.getElementById('humidity'),
+  wind: document.getElementById('wind'),
+  forecastContainer: document.getElementById('forecastContainer')
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-    loadRecentSearches();
-    fetchWeather("New York");
+// API setup
+const apiKey = 'cd90ce4504fea82fc3b20bb4d2ad59a7', baseUrl = 'https://api.openweathermap.org/data/2.5/';
 
-    document.getElementById("searchBtn").addEventListener("click", () => {
-        const city = document.getElementById("searchInput").value;
-        if (city) {
-            fetchWeather(city);
-            storeRecentSearch(city);
-        }
-    });
+// Fetch weather data
+async function getWeatherData(city) {
+  try {
+    const response = await fetch(`${baseUrl}weather?q=${city}&appid=${apiKey}&units=metric`);
+    if (!response.ok) throw new Error('Weather data not found.');
+    const data = await response.json();
+    displayWeatherData(data);
+    storeRecentSearch(city);
+    fetchForecastData(city);
+  } catch (error) {
+    alert('Could not fetch weather data. Please try again.');
+  }
+}
 
-    document.getElementById("currentLocationBtn").addEventListener("click", () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                fetchWeatherByCoords(position.coords.latitude, position.coords.longitude);
-            });
-        }
+// Fetch 5-day forecast data
+async function fetchForecastData(city) {
+  try {
+    const response = await fetch(`${baseUrl}forecast?q=${city}&appid=${apiKey}&units=metric`);
+    if (!response.ok) throw new Error('Forecast data not found.');
+    const data = await response.json();
+    displayForecastData(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Display current weather data
+function displayWeatherData(data) {
+  const currentDate = new Date();
+  elements.cityname.textContent = data.name;
+  elements.dateTime.textContent = currentDate.toLocaleString();
+  elements.temperature.textContent = `${Math.round(data.main.temp)}°C`;
+  elements.feelsLike.textContent = `Feels like ${Math.round(data.main.feels_like)}°C`;
+  elements.weatherDescription.textContent = data.weather[0].description;
+  elements.humidity.textContent = `Humidity: ${data.main.humidity}%`;
+  elements.wind.textContent = `Wind: ${data.wind.speed} km/h`;
+  elements.weatherIcon.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+}
+
+// Display forecast data
+function displayForecastData(data) {
+  elements.forecastContainer.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const forecast = data.list[i * 8], date = new Date(forecast.dt * 1000),
+      day = date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
+    const card = document.createElement('div');
+    card.classList.add('p-6', 'rounded-2xl', 'shadow-lg', 'text-center', 'transform', 'transition-transform', 'duration-300', 'ease-in-out', 'hover:scale-110');
+    card.innerHTML = `
+      <h3 class="text-lg font-semibold">${day}</h3>
+      <img src="https://openweathermap.org/img/wn/${forecast.weather[0].icon}.png" alt="Weather Icon" class="mx-auto my-2 w-16">
+      <p class="text-xl font-bold">${Math.round(forecast.main.temp)}°C</p>
+      <p>${forecast.weather[0].description}</p>
+      <p>Wind: ${forecast.wind.speed} km/h</p>
+      <p>Humidity: ${forecast.main.humidity}%</p>
+    `;
+    elements.forecastContainer.appendChild(card);
+  }
+}
+
+// Store and update recent searches
+function storeRecentSearch(city) {
+  const recentCities = JSON.parse(localStorage.getItem('recentCities')) || [];
+  if (!recentCities.includes(city)) {
+    recentCities.push(city);
+    localStorage.setItem('recentCities', JSON.stringify(recentCities));
+  }
+  updateRecentSearches();
+}
+
+// Update recent searches dropdown
+function updateRecentSearches() {
+  const recentCities = JSON.parse(localStorage.getItem('recentCities')) || [];
+  elements.recentSearches.innerHTML = '';
+  if (recentCities.length) {
+    elements.recentSearches.classList.remove('hidden');
+    recentCities.forEach(city => {
+      const listItem = document.createElement('li');
+      listItem.textContent = city;
+      listItem.classList.add('p-2', 'cursor-pointer', 'hover:bg-gray-200');
+      listItem.addEventListener('click', () => getWeatherData(city));
+      elements.recentSearches.appendChild(listItem);
     });
+  } else {
+    elements.recentSearches.classList.add('hidden');
+  }
+}
+
+// Get weather data for current location
+function getCurrentLocationWeather() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(position => {
+      const { latitude: lat, longitude: lon } = position.coords;
+      fetch(`${baseUrl}weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`)
+        .then(response => response.json())
+        .then(data => {
+          displayWeatherData(data);
+          fetchForecastData(data.name);
+        })
+        .catch(console.error);
+    });
+  } else {
+    alert('Geolocation not supported.');
+  }
+}
+
+// Validate search input
+function validateSearchInput(input) {
+  if (!input.trim()) {
+    alert('Please enter a valid city name.');
+    return false;
+  }
+  return true;
+}
+
+// Event listeners
+elements.searchBtn.addEventListener('click', () => {
+  const city = elements.searchInput.value.trim();
+  if (validateSearchInput(city)) {
+    getWeatherData(city);
+    elements.searchInput.value = '';
+  }
 });
 
-async function fetchWeather(city) {
-    try {
-        const response = await fetch(`https://weather-api138.p.rapidapi.com/weather?city_name=${city}`, options);
-        const data = await response.json();
-        updateUI(data, city);
-    } catch (error) {
-        console.log("Error fetching weather data:", error);
-    }
-}
+elements.currentLocationBtn.addEventListener('click', getCurrentLocationWeather);
 
-async function fetchWeatherByCoords(lat, lon) {
-    try {
-        const response = await fetch(`https://weather-api138.p.rapidapi.com/weather?lat=${lat}&lon=${lon}`, options);
-        const data = await response.json();
-        updateUI(data, data.name);
-    } catch (error) {
-        alert("Error fetching location-based weather data:", error);
-    }
-}
-
-function updateUI(data, city) {
-    document.getElementById("dateTime").textContent = new Date().toLocaleString();
-    document.getElementById("cityname").textContent = city;
-    document.getElementById("temperature").textContent = `${data.main.temp}°C`;
-    document.getElementById("feelsLike").textContent = `Feels like ${data.main.feels_like}°C`;
-    document.getElementById("weatherIcon").textContent = `${data.weather[0].icon}`;
-    document.getElementById("weatherDescription").textContent = data.weather[0].description;
-    document.getElementById("humidity").textContent = `Humidity: ${data.main.humidity}%`;
-    document.getElementById("wind").textContent = `Wind: ${data.wind.speed} km/h`;
-    document.getElementById("precipitation").textContent = `Precipitation: ${data.pop || 0}%`;
-
-    const forecastContainer = document.getElementById("forecastContainer");
-    forecastContainer.innerHTML = "";
-    data.daily.slice(0, 5).forEach(day => {
-        const forecastCard = document.createElement("div");
-        forecastCard.classList.add("p-6", "rounded-2xl", "shadow-lg", "text-center");
-        forecastCard.innerHTML = `
-            <h3 class="text-lg font-semibold">${new Date(day.dt * 1000).toLocaleDateString()}</h3>
-            <img src="https://openweathermap.org/img/wn/${day.weather[0].icon}.png" alt="${day.weather[0].description}" class="mx-auto my-2 w-16">
-            <p class="text-xl font-bold">${day.temp.day}°C</p>
-            <p>${day.weather[0].description}</p>
-        `;
-        forecastContainer.appendChild(forecastCard);
-    });
-}
-
-function storeRecentSearch(city) {
-    let searches = JSON.parse(localStorage.getItem("recentSearches")) || [];
-    if (!searches.includes(city)) {
-        searches.unshift(city);
-        if (searches.length > 5) searches.pop();
-        localStorage.setItem("recentSearches", JSON.stringify(searches));
-    }
-    loadRecentSearches();
-}
-
-function loadRecentSearches() {
-    const recentSearches = JSON.parse(localStorage.getItem("recentSearches")) || [];
-    const searchList = document.getElementById("recentSearches");
-    searchList.innerHTML = "";
-    recentSearches.forEach(city => {
-        const li = document.createElement("li");
-        li.textContent = city;
-        li.classList.add("cursor-pointer", "p-2", "hover:bg-gray-200", "flex", "justify-between", "items-center");
-        const removeBtn = document.createElement("button");
-        removeBtn.textContent = "❌";
-        removeBtn.classList.add("ml-2", "text-red-500");
-        removeBtn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            removeRecentSearch(city);
-        });
-        
-        li.appendChild(removeBtn);
-        li.addEventListener("click", () => fetchWeather(city));
-        searchList.appendChild(li);
-    });
-    searchList.classList.toggle("hidden", recentSearches.length === 0);
-}
-
-function removeRecentSearch(city) {
-    let searches = JSON.parse(localStorage.getItem("recentSearches")) || [];
-    searches = searches.filter(item => item !== city);
-    localStorage.setItem("recentSearches", JSON.stringify(searches));
-    loadRecentSearches();
-}
+// Initialize
+updateRecentSearches();
